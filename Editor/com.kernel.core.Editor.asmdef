@@ -1,0 +1,11 @@
+{
+    "name": "KernelEditor.Core",
+    "references": [
+        "Kernel.Core"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false
+}

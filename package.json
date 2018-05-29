@@ -1,0 +1,14 @@
+{
+    "name": "com.kernel.core",
+    "displayName": "Kernel Core",
+	"author": "fiar",
+    "version": "0.5.1",
+    "unity": "2018.1",
+    "description": "Kernel Core package",
+    "keywords": [
+        "kernel"
+    ],
+    "dependencies": {
+    },
+    "category": "Kernel"
+}
