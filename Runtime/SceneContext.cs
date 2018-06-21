@@ -30,6 +30,7 @@ namespace Kernel.Core
 			}
 			Instance = this;
 
+			OnInitializedInternal();
 			OnInitialized();
 		}
 
@@ -61,6 +62,8 @@ namespace Kernel.Core
 
 			StopContext();
 		}
+
+		protected virtual void OnInitializedInternal() { }
 
 		protected virtual void OnInitialized() { }
 
