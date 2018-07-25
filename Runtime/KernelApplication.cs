@@ -23,6 +23,8 @@ namespace Kernel.Core
 		{
 			_instance = this;
 
+			Args = new List<object>();
+
 			var handler = GetComponentInChildren<IKernelHandler>();
 			if (handler != null)
 				handler.Initialized();
