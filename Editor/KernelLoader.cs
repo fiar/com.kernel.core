@@ -4,121 +4,97 @@ using UnityEditor.SceneManagement;
 using UnityEngine.SceneManagement;
 using System.Text.RegularExpressions;
 using Kernel.Core;
+using System;
+using System.Collections.Generic;
 
 namespace KernelEditor.Core
 {
 	[InitializeOnLoad]
 	public class KernelLoader
 	{
+		[Serializable]
+		private class ScenesSetup
+		{
+			public string[] Scenes;
+		}
 
 		static KernelLoader()
 		{
 			EditorApplication.playModeStateChanged += OnPlayModeChanged;
 		}
 
+		private static void OnLoadingKernel()
+		{
+			if (KernelApplication.IsLoaded)
+			{
+				EditorApplication.update -= OnLoadingKernel;
+
+				var setup = new ScenesSetup();
+				var json = EditorPrefs.GetString("KernelLoader.Scenes", string.Empty);
+				if (!string.IsNullOrEmpty(json))
+				{
+					EditorJsonUtility.FromJsonOverwrite(json, setup);
+				}
+				if (setup != null && setup.Scenes != null)
+				{
+					foreach (var s in setup.Scenes)
+					{
+						SceneManager.LoadScene(s, LoadSceneMode.Additive);
+					}
+				}
+			}
+		}
+
 		private static void OnPlayModeChanged(PlayModeStateChange state)
 		{
+			if (state == PlayModeStateChange.ExitingEditMode)
+			{
+				EditorPrefs.SetString("KernelLoader.Scenes", string.Empty);
+				EditorSceneManager.playModeStartScene = null;
+			}
+
 			var config = ConfigManager.Load<KernelConfig>();
 			if (config == null)
 			{
-				Debug.LogError("<b>KernelLoader</b> config not exists");
+				Debug.LogError("<b>KernelLoader</b>: config not exists");
 				EditorApplication.isPlaying = false;
 				return;
 			}
 
-			if (!EditorApplication.isPlaying && EditorApplication.isPlayingOrWillChangePlaymode)
+			if (!config.IsEnabled) return;
+
+			if (config.KernelScene == null)
 			{
-				NeedUnloadKernel = false;
-				ActiveScene = EditorSceneManager.GetActiveScene().name;
-
-				if (!new Regex(config.ScenesPattern).IsMatch(ActiveScene)) return;
-
-				Scene scene;
-				if (!IsKernelLoaded)
-				{
-					Debug.Log("<i>Load Kernel scene.</i>");
-					var kernelPath = AssetDatabase.GetAssetPath(config.KernelScene);
-					scene = EditorSceneManager.OpenScene(kernelPath, OpenSceneMode.Additive);
-					if (!scene.isLoaded)
-					{
-						Debug.LogWarning("Cant load Kernel scene");
-						EditorApplication.isPlaying = false;
-					}
-					else
-					{
-						NeedUnloadKernel = true;
-					}
-				}
-				else
-				{
-					scene = EditorSceneManager.GetSceneByName(config.KernelScene.name);
-				}
-
-				if (EditorSceneManager.GetActiveScene() != scene && !EditorSceneManager.SetActiveScene(scene))
-				{
-					Debug.LogWarning("Activate Kernel scene is failed");
-					EditorApplication.isPlaying = false;
-				}
+				Debug.LogWarning("<b>KernelLoader</b>: Kernel Scene is null");
+				return;
 			}
 
-			if (!EditorApplication.isPlaying && !EditorApplication.isPlayingOrWillChangePlaymode)
+			if (state == PlayModeStateChange.ExitingEditMode)
 			{
-				var activeScene = EditorSceneManager.GetSceneByName(ActiveScene);
-				if (activeScene.isLoaded && activeScene != EditorSceneManager.GetActiveScene())
-				{
-					if (!EditorSceneManager.SetActiveScene(activeScene))
-					{
-						Debug.LogWarningFormat("Activate {0} scene is failed", activeScene.name);
-					}
-				}
+				var activeSceneName = EditorSceneManager.GetActiveScene().name;
+				if (!new Regex(config.ScenesPattern).IsMatch(activeSceneName)) return;
 
-				if (NeedUnloadKernel)
-				{
-					var kernelScene = EditorSceneManager.GetSceneByName(config.KernelScene.name);
-					EditorSceneManager.CloseScene(kernelScene, true);
-				}
+				Debug.Log("<i>Load <b>Kernel</b> scene.</i>");
 
-				ClearPrefs();
-			}
-		}
-
-		private static bool IsKernelLoaded
-		{
-			get
-			{
-				var config = ConfigManager.Load<KernelConfig>();
-				if (config == null)
-				{
-					Debug.LogError("KernelLoaderConfig not exists");
-					EditorApplication.isPlaying = false;
-					return false;
-				}
-
+				var scenes = new List<string>();
 				for (int i = 0; i < EditorSceneManager.loadedSceneCount; i++)
 				{
-					var scene = EditorSceneManager.GetSceneAt(i);
-					if (scene.name == config.KernelScene.name) return true;
+					var sceneName = EditorSceneManager.GetSceneAt(i).name;
+					if (sceneName == config.KernelScene.name) continue;
+					scenes.Add(sceneName);
 				}
-				return false;
+
+				EditorPrefs.SetString("KernelLoader.Scenes", EditorJsonUtility.ToJson(new ScenesSetup { Scenes = scenes.ToArray() }));
+
+				EditorSceneManager.playModeStartScene = config.KernelScene;
 			}
-		}
+			else if (state == PlayModeStateChange.EnteredPlayMode)
+			{
+				var scenes = EditorPrefs.GetString("KernelLoader.Scenes", string.Empty);
+				if (string.IsNullOrEmpty(scenes)) return;
 
-		private static bool NeedUnloadKernel
-		{
-			get { return PlayerPrefs.GetInt("Kernel.NeedUnloadKernel", 0) != 0; }
-			set { PlayerPrefs.SetInt("Kernel.NeedUnloadKernel", value ? 1 : 0); }
-		}
-
-		private static string ActiveScene
-		{
-			get { return PlayerPrefs.GetString("Kernel.ActiveScene", string.Empty); }
-			set { PlayerPrefs.SetString("Kernel.ActiveScene", value); }
-		}
-
-		private static void ClearPrefs()
-		{
-			PlayerPrefs.DeleteKey("Kernel.NeedUnloadKernel");
-			PlayerPrefs.DeleteKey("Kernel.ActiveScene");
+				EditorApplication.update += OnLoadingKernel;
+			}
 		}
 	}
 }
