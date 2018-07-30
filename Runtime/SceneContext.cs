@@ -58,12 +58,14 @@ namespace Kernel.Core
 
 		protected void OnDestroy()
 		{
-			Instance = null;
-
+			OnDestroyInternal();
 			StopContext();
+
+			Instance = null;
 		}
 
 		protected virtual void OnInitializedInternal() { }
+		protected virtual void OnDestroyInternal() { }
 
 		protected virtual void OnInitialized() { }
 

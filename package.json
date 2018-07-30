@@ -2,7 +2,7 @@
     "name": "com.kernel.core",
     "displayName": "Kernel Core",
 	"author": "fiar",
-    "version": "0.5.3",
+    "version": "0.5.4",
     "unity": "2018.1",
     "description": "Kernel Core package",
     "keywords": [
