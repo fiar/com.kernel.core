@@ -52,14 +52,34 @@ namespace KernelEditor.Core
 				EditorPrefs.SetString("KernelLoader.Scenes", string.Empty);
 				EditorSceneManager.playModeStartScene = null;
 			}
+			else if (state == PlayModeStateChange.EnteredPlayMode)
+			{
+				// Do nothing
+			}
+			else
+			{
+				// Unused state
+				return;
+			}
 
-			var config = ConfigManager.Load<KernelConfig>();
-			if (config == null)
+			KernelConfig config = null;
+			var configs = Resources.LoadAll<KernelConfig>(string.Empty);
+			if (configs.Length == 0)
 			{
 				Debug.LogError("<b>KernelLoader</b>: config not exists");
 				EditorApplication.isPlaying = false;
 				return;
 			}
+			if (configs.Length > 1)
+			{
+				Debug.LogWarning("<b>KernelLoader</b>: multiple configs. Using first default");
+				foreach (var asset in configs)
+				{
+					Debug.LogWarning(" * Config: " + AssetDatabase.GetAssetPath(asset));
+				}
+			}
+
+			config = configs[0];
 
 			if (!config.IsEnabled) return;
 
