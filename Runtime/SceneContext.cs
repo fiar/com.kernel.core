@@ -36,13 +36,17 @@ namespace Kernel.Core
 
 		protected void Start()
 		{
-			SceneManager.SetActiveScene(gameObject.scene);
-			StartCoroutine(StartAsync());
-		}
+			if (!KernelApplication.IsLoaded)
+			{
+				Debug.LogError("<b>Kernel</b> not loaded");
+#if UNITY_EDITOR
+				UnityEditor.EditorApplication.isPlaying = false;
+#endif
+			}
 
-		protected IEnumerator StartAsync()
-		{
-			while (!KernelApplication.IsLoaded) yield return null;
+			SceneManager.SetActiveScene(gameObject.scene);
+
+			StartContextInternal();
 
 			var roots = gameObject.scene
 				.GetRootGameObjects()
@@ -58,19 +62,19 @@ namespace Kernel.Core
 
 		protected void OnDestroy()
 		{
-			OnDestroyInternal();
+			StopContextInternal();
 			StopContext();
 
 			Instance = null;
 		}
 
 		protected virtual void OnInitializedInternal() { }
-		protected virtual void OnDestroyInternal() { }
+		protected virtual void StartContextInternal() { }
+		protected virtual void StopContextInternal() { }
+
 
 		protected virtual void OnInitialized() { }
-
 		protected virtual void StartContext() { }
-
 		protected virtual void StopContext() { }
 	}
 }
