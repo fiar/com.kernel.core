@@ -29,10 +29,19 @@ namespace Kernel.Core
 
 		protected virtual void OnDestroy()
 		{
-			OnUnRegistered();
+			if (IsRegistered)
+			{
+				IsRegistered = false;
+				OnUnRegistered();
+			}
+			OnDeinitialized();
 		}
 
 		protected virtual void OnInitialized()
+		{
+		}
+
+		protected virtual void OnDeinitialized()
 		{
 		}
 
