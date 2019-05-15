@@ -27,7 +27,7 @@ namespace Kernel.Core
 
 			var handler = GetComponentInChildren<IKernelHandler>();
 			if (handler != null)
-				handler.Initialized();
+				handler.KernelInitialized();
 		}
 
 		private void Start()
@@ -39,7 +39,7 @@ namespace Kernel.Core
 		{
 			var handler = GetComponentInChildren<IKernelHandler>();
 			if (handler != null)
-				handler.Destroy();
+				handler.KernelDestroy();
 
 			_instance = null;
 		}
@@ -60,7 +60,7 @@ namespace Kernel.Core
 
 			var handler = GetComponentInChildren<IKernelHandler>();
 			if (handler != null)
-				handler.Loaded();
+				handler.KernelLoaded();
 		}
 
 		private IEnumerator ConfigureAsync(IKernelConfiguration configuration)
@@ -97,7 +97,7 @@ namespace Kernel.Core
 
 			var handler = GetComponentInChildren<IKernelHandler>();
 			if (handler != null)
-				handler.Reset();
+				handler.KernelReset();
 
 			Args = new List<object>(args);
 
